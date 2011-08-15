@@ -1,0 +1,12 @@
+.tv {
+	height:520px;
+	width:640px;
+	background-image:url(tv.png);
+	background-repeat:no-repeat;
+}
+
+.absvideo {
+	position: absolute;
+	top:155px;
+	left:90px;
+}

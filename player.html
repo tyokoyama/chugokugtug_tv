@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Google TV</title>
+  <link rel="stylesheet" href="style.css"  type="text/css">
+  <script src="http://www.google.com/jsapi"></script>
+
+  <script>
+	google.load("swfobject", "2.1");
+	google.load("jquery", "1.5.2");
+  </script>
+
+  <script>
+	var ytplayer;
+	function onYouTubePlayerReady(playerId) {
+//	   alert('onYouTubePlayerReady');
+//	   console.log(playerId);
+
+	   ytplayer = document.getElementById("myytplayer");
+	   console.log(ytplayer);
+	}
+
+	function playVideo(videoId) {
+	   if(ytplayer) {
+	      ytplayer.loadVideoById(videoId);
+	   }
+	}
+
+	var handleSuccess = function (data, datatype) {
+	    console.log(data);
+	    console.log(datatype);
+
+	    var prevStartIndex = parseInt(data.feed.openSearch$startIndex.$t) - parseInt(data.feed.openSearch$itemsPerPage.$t);
+	    var nextStartIndex = parseInt(data.feed.openSearch$startIndex.$t) + parseInt(data.feed.openSearch$itemsPerPage.$t);
+
+	    var htmlText = "<p>";
+	    htmlText += "<input type=\"button\" name=\"prev\" value=\"前の10件\" onClick=\"getYouTubeData(document.frm.keyword.value," +  prevStartIndex + ");\">";
+	    htmlText += "<input type=\"button\" name=\"next\" value=\"次の10件\" onClick=\"getYouTubeData(document.frm.keyword.value," + nextStartIndex + ");\">";
+	    htmlText += "<table border=\"1\">";
+	    for(var i = 0; i < data.feed.entry.length;i++) {
+			var author = data.feed.entry[i].author[0].name.$t
+			var title = data.feed.entry[i].title.$t;
+			var url = data.feed.entry[i].link[0].href;
+			var idarray = data.feed.entry[i].id.$t.split("/");
+			var videoId = idarray[idarray.length - 1];
+
+			htmlText += "<tr>";
+						   
+			// 再生ボタン
+			htmlText += "<td>" + "<input type=\"button\" onClick=\"playVideo('" + videoId + "');\" value=\"見る\">" + "</td>";
+			// 作成者
+			htmlText += "<td>" + author + "</td>";
+			// タイトル
+			htmlText += "<td>" + title + "</td>";
+//			// URL
+//			htmlText += "<td>" + "<a href='" + url + "'>" + url + "</a></td>";
+
+			htmlText += "</tr>";
+		}
+		htmlText += "</table></p>";
+
+//console.log(htmlText);
+		$('#result').html(htmlText);
+	}
+						   
+	var handleError = function(xhr, status, error) {
+	    console.log('handleError');
+		console.log(status);
+		console.log(error);
+    }
+
+	var handleComplete = function(xhr, status) {
+
+	}
+
+	function getYouTubeData(keyword, startindex) {
+	    console.log(keyword);
+		var trimKeyword = keyword.replace(/^\s+|\s+$/g,"");
+		var halfKeyword = trimKeyword.replace(/ +/g, "+");  // 半角
+		var newKeyword = halfKeyword.replace(/　+/g, "+");  // 全角
+		var url = 'http://gdata.youtube.com/feeds/api/videos?alt=json-in-script&max-results=10&start-index=' + startindex + '&vq=' + newKeyword;
+		console.log(url);
+		$.ajax({
+		    type:"GET"
+		   ,contentType: "text/javascript"
+		   ,url: url
+		   ,dataType: "jsonp"
+		   ,success: handleSuccess
+		   ,error: handleError
+		   ,complete: handleComplete
+        });
+	}
+
+	function submitStop(e, keyword, startIndex) {
+		if(!e) var e = window.event;
+
+		if(e.keyCode == 13) {
+			getYouTubeData(keyword, startIndex);
+			return false;
+		}
+	}
+  </script>
+</head>
+<body>
+  <div class="tv">
+    <div id="absplayer" class="absvideo">
+	  <div id="ytapiplayer">
+		You need Flash player 8+ and JavaScript enabled to view this video.
+	  </div>
+	</div>
+  </div>
+  <script>
+	var flashvars = {};
+	var params = { allowScriptAccess: "always" };
+	var atts = { id: "myytplayer" };
+	swfobject.embedSWF("http://www.youtube.com/v/zQ8nsE2XC7k&enablejsapi=1&playerapiid=ytplayer", "ytapiplayer","480","295","8",null,flashvars,params,atts);
+  </script>
+  <P>番組表</P>
+  <form name="frm">
+	<input type="text" name="keyword" onKeyPress="return submitStop(event, document.frm.keyword.value, 1);">
+	<input type="button" value="取得" onClick="getYouTubeData(document.frm.keyword.value, 1);">
+	<div id="result"></div>
+  </form>
+</body>
+</html>
